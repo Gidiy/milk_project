@@ -1,1 +1,142 @@
-test 2
+#define BLYNK_PRINT Serial
+#define ESP8266_BAUD 9600 // Your ESP8266 baud rate:
+
+
+#include <ESP8266_Lib.h>
+#include <BlynkSimpleShieldEsp8266.h>
+#include <SoftwareSerial.h>
+#include <HX711_ADC.h>
+#include <EEPROM.h>
+
+#if defined(ESP8266)|| defined(ESP32) || defined(AVR)
+#include <EEPROM.h>
+#endif
+char auth[] = "iBdj_KISKSGwfYKDZnfyZORMeM-1EmuT";// You should get Auth Token in the Blynk App
+char ssid[] = "****"; // Your WiFi username
+char pass[] = "****"; // your wifi password
+
+static int g = 1; // global variable
+static int timecounter = 0;
+static long tare_offset = 0;
+static boolean _tare = false; //set this to false as the value has been resored from eeprom
+static float calibrationValue; // calibration value
+static unsigned long stabilizingtime = 2000; // preciscion right after power-up can be improved by adding a few seconds of stabilizing time
+static boolean newDataReady = 0;
+static boolean faltru = false;
+static const int serialPrintInterval = 250; //increase value to slow down serial print activity
+
+
+
+const int HX711_dout = 4; //mcu > HX711 dout pin
+const int HX711_sck = 5; //mcu > HX711 sck pin
+const int calVal_eepromAdress = 0;
+const int tareOffsetVal_eepromAdress = 4;
+unsigned long t = 0;
+static int k = 0; //counter
+static int x = 0; //counter
+static float i = 0; //wight recieved
+static int l = 0; // offset fix
+static float v;//calibration wight
+HX711_ADC LoadCell(HX711_dout, HX711_sck); //HX711 constructor
+SoftwareSerial EspSerial(2, 3); // RX, TX - pin set
+ESP8266 wifi(&EspSerial);
+
+void setup()
+{
+
+  Serial.begin(9600);// Baund for serial data transmission
+  delay(10);
+
+  EspSerial.begin(ESP8266_BAUD);// Set ESP8266 baud rate
+  delay(10);
+
+  Blynk.begin(auth, wifi, ssid, pass);
+
+  LoadCell.begin();
+  calibrationValue = 696.0;
+
+#if defined(ESP8266)|| defined(ESP32)
+  EEPROM.begin(512);
+#endif
+
+
+  EEPROM.get(tareOffsetVal_eepromAdress, tare_offset);
+  LoadCell.setTareOffset(tare_offset);
+  LoadCell.start(stabilizingtime, _tare);
+  if (LoadCell.getTareTimeoutFlag())
+  {
+    while (1);
+  }
+  else {
+    LoadCell.setCalFactor(calibrationValue); // set calibration value (float)
+  }
+}
+
+void loop()
+{
+  Blynk.run();
+
+  if (LoadCell.update()) newDataReady = true;// check for new data/start next conversion:
+
+  // get smoothed value from the dataset:
+  if (newDataReady) {
+    if (millis() > t + serialPrintInterval)
+    {
+      i = LoadCell.getData();//check weight
+      if (k == 0 && x == 1)
+        Blynk.notify("im on!");//connected to wifi and start
+      if (k == 0 && x == 30) //after 30 sec. save offset
+      {
+        l = i; // offset
+        k++;
+        Blynk.notify("im ready!");// after calibration
+      }
+      x++;//timer in sec.
+
+      Serial.println((i - l) * 100); // the calibration fix
+
+      newDataReady = 0;
+      t = millis();
+    }
+    delay(1000);
+  }
+
+  // receive command from serial terminal, send 't' to initiate tare operation:
+  if (Serial.available() > 0) {
+    char inByte = Serial.read();
+    if (inByte == 't') refreshOffsetValueAndSaveToEEprom();
+  }
+
+  v = ((i - l) * 100);
+  if (v > 420 && v < 700 ) //In case of using, no last more than 20 sec. in area of "almost empty"
+  {
+    timecounter++;
+    if (timecounter == 20)// after 20 sec. in this area we know that the milk is almost empty
+    {
+      Serial.print("this =");
+      Serial.println(v);
+      Blynk.notify("Out of milk :( ");
+      timecounter = 0;
+    }
+  }
+  else // if out of the area of "almost empty"
+  {
+    timecounter = 0;
+  }
+  Serial.println("timecounter" + String(timecounter));//print the timer count
+}
+
+// zero offset value (tare), calculate and save to EEprom:
+void refreshOffsetValueAndSaveToEEprom() 
+{
+  long _offset = 0;
+  //Serial.println("Calculating tare offset value...");
+  LoadCell.tare(); // calculate the new tare / zero offset value (blocking)
+  _offset = LoadCell.getTareOffset(); // get the new tare / zero offset value
+  EEPROM.put(tareOffsetVal_eepromAdress, _offset); // save the new tare / zero offset value to EEprom
+#if defined(ESP8266) || defined(ESP32)
+  EEPROM.commit();
+#endif
+  LoadCell.setTareOffset(_offset); // set value as library parameter (next restart it will be read from EEprom)
+}
+
