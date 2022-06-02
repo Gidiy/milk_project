@@ -11,9 +11,9 @@
 #if defined(ESP8266)|| defined(ESP32) || defined(AVR)
 #include <EEPROM.h>
 #endif
-char auth[] = "iBdj_KISKSGwfYKDZnfyZORMeM-1EmuT";// You should get Auth Token in the Blynk App
-char ssid[] = "****"; // Your WiFi username
-char pass[] = "****"; // your wifi password
+char auth[] = "*****";// You should get Auth Token in the Blynk App
+char ssid[] = "*****"; // Your WiFi username
+char pass[] = "*****"; // your wifi password
 
 static int g = 1; // global variable
 static int timecounter = 0;
@@ -139,4 +139,3 @@ void refreshOffsetValueAndSaveToEEprom()
 #endif
   LoadCell.setTareOffset(_offset); // set value as library parameter (next restart it will be read from EEprom)
 }
-
