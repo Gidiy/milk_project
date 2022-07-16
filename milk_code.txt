@@ -1,3 +1,6 @@
+//https://github.com/Gidiy/milk-alert-project.git
+//Enjoy!
+
 #define BLYNK_PRINT Serial
 #define ESP8266_BAUD 9600 // Your ESP8266 baud rate:
 
@@ -27,8 +30,8 @@ static const int serialPrintInterval = 250; //increase value to slow down serial
 
 
 
-const int HX711_dout = 4; //mcu > HX711 dout pin
-const int HX711_sck = 5; //mcu > HX711 sck pin
+const int HX711_dout = 5; //mcu > HX711 dout pin
+const int HX711_sck = 4; //mcu > HX711 sck pin
 const int calVal_eepromAdress = 0;
 const int tareOffsetVal_eepromAdress = 4;
 unsigned long t = 0;
@@ -124,6 +127,7 @@ void loop()
     timecounter = 0;
   }
   Serial.println("timecounter" + String(timecounter));//print the timer count
+  Blynk.virtualWrite(V1,v);
 }
 
 // zero offset value (tare), calculate and save to EEprom:
