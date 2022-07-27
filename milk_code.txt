@@ -1,4 +1,4 @@
-//https://github.com/Gidiy/milk-alert-project.git
+//https://github.com/Gidiy/milk_project
 //https://www.thingiverse.com/thing:5440323
 //https://www.linkedin.com/in/gilad-iosef-890594224/
 //Enjoy!
