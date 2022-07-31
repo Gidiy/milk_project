@@ -20,9 +20,6 @@ Credits:
 Bar Meyerovich 
 Tal Cohen 
 
-https://lnkd.in/dzy7B_9c
- - LinkedIn
-https://lnkd.in/daH7uHvD
- - Thingiverse 3D
-https://github.com/Gidiy
- - Github
+https://lnkd.in/dzy7B_9c  - LinkedIn
+https://lnkd.in/daH7uHvD  - Thingiverse 3D
+https://github.com/Gidiy  - Github
